@@ -128,22 +128,38 @@ function updateBooms(dt) {
 }
 
 // ---------- 玩家机体 ----------
-function buildShip() {
+function buildPlane(color, accent, scale) {
   const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.ConeGeometry(0.55, 2.6, 4), neon(0x66ccff, 1.2));
-  body.rotation.x = Math.PI / 2; body.rotation.y = Math.PI / 4; body.position.z = -0.3;
-  g.add(body);
-  const wing = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.12, 0.9), neon(0x4477ff, 1.0));
-  wing.position.y = -0.15; wing.position.z = 0.1;
-  g.add(wing);
-  const eng = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.4, 1.2, 8), neon(0xff6633, 1.6));
-  eng.rotation.x = Math.PI / 2; eng.position.z = 1.4;
-  g.add(eng);
-  const glow = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), add(0xff8844, 0.9));
-  glow.position.z = 1.9; g.add(glow);
+  const mB = neon(color, 1.6);
+  const mA = neon(accent, 3.2);
+  const fus = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.4, 1.9, 8), mB);
+  fus.rotation.x = Math.PI / 2; fus.position.z = 0.1; g.add(fus);
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.9, 8), mB);
+  nose.rotation.x = -Math.PI / 2; nose.position.z = -1.15; g.add(nose);
+  const canopy = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 8), mA);
+  canopy.position.set(0, 0.16, -0.55); g.add(canopy);
+  for (const side of [-1, 1]) {
+    const w = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.08, 0.85), mB);
+    w.position.set(side * 0.95, 0, 0.15); w.rotation.y = -side * 0.28; g.add(w);
+    const ws = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.05, 0.1), mA);
+    ws.position.set(side * 1.02, 0.05, -0.12); ws.rotation.y = -side * 0.28; g.add(ws);
+    const t = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.06, 0.35), mB);
+    t.position.set(side * 0.5, 0, 0.95); t.rotation.y = -side * 0.3; g.add(t);
+    const ts = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.04, 0.08), mA);
+    ts.position.set(side * 0.55, 0.04, 0.75); ts.rotation.y = -side * 0.3; g.add(ts);
+  }
+  const fin = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.65, 0.5), mB);
+  fin.position.set(0, 0.4, 0.95); g.add(fin);
+  const finTip = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.12, 0.4), mA);
+  finTip.position.set(0, 0.72, 0.95); g.add(finTip);
+  const eng = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.26, 0.7, 8), mB);
+  eng.rotation.x = Math.PI / 2; eng.position.z = 1.15; g.add(eng);
+  const glow = new THREE.Mesh(new THREE.SphereGeometry(0.26, 8, 8), add(0xff8844, 0.95));
+  glow.position.z = 1.6; g.add(glow);
+  g.scale.setScalar(scale);
   return g;
 }
-const player = buildShip();
+const player = buildPlane(0x1e3f9e, 0x55ddff, 1.15);
 scene.add(player);
 const playerPos = new THREE.Vector3(0, 0, 0);
 const playerState = {
@@ -157,10 +173,16 @@ const playerState = {
 // ---------- 子弹 ----------
 const bullets = [];
 function fireBullet(from, dir, dmg, color, size = 0.35, pierce = 0) {
-  const m = new THREE.Mesh(new THREE.OctahedronGeometry(size, 0), add(color, 1));
-  m.position.copy(from);
-  scene.add(m);
-  bullets.push({ m, v: dir.clone(), dmg, pierce, hit: new Set(), life: 3 });
+  const g = new THREE.Group();
+  const core = new THREE.Mesh(new THREE.SphereGeometry(size * 0.55, 8, 8), add(color, 1));
+  g.add(core);
+  const trail = new THREE.Mesh(new THREE.BoxGeometry(size * 0.5, size * 0.5, size * 4.5), add(color, 0.6));
+  trail.position.z = -size * 2.2;
+  g.add(trail);
+  g.position.copy(from);
+  g.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir.clone().normalize());
+  scene.add(g);
+  bullets.push({ m: g, v: dir.clone(), dmg, pierce, hit: new Set(), life: 3 });
 }
 
 // 自动开火：找最近敌人
@@ -178,36 +200,21 @@ const enemies = [];
 function spawnEnemy(kind) {
   const g = new THREE.Group();
   let hp;
-  let mat;
   if (kind === 0) {
     hp = 40;
-    mat = neon(0xff3322, 2.4);
-    const body = new THREE.Mesh(new THREE.OctahedronGeometry(1.6, 0), mat);
-    g.add(body);
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 8), add(0xffffff, 1));
-    eye.position.z = 1.0; g.add(eye);
-    const mark = new THREE.Mesh(new THREE.RingGeometry(2.1, 2.4, 24), add(0xff6644, 0.9));
-    g.add(mark);
+    g.add(buildPlane(0x7a1420, 0xff4433, 1.0));
   } else if (kind === 1) {
     hp = 80;
-    mat = neon(0xffaa22, 2.4);
-    const body = new THREE.Mesh(new THREE.ConeGeometry(1.1, 2.6, 5), mat);
-    body.rotation.x = Math.PI / 2; g.add(body);
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(1.7, 0.14, 8, 24), add(0xffee55, 1));
-    g.add(ring);
-    const mark = new THREE.Mesh(new THREE.RingGeometry(2.4, 2.7, 24), add(0xffcc44, 0.9));
-    g.add(mark);
+    g.add(buildPlane(0x7a3d00, 0xffaa22, 1.05));
   } else {
     hp = 130;
-    mat = neon(0xcc55ff, 2.4);
-    const body = new THREE.Mesh(new THREE.IcosahedronGeometry(1.8, 0), mat);
-    g.add(body);
-    const mark = new THREE.Mesh(new THREE.RingGeometry(2.5, 2.8, 24), add(0xcc66ff, 0.9));
-    g.add(mark);
+    g.add(buildPlane(0x4a1478, 0xcc66ff, 1.5));
   }
+  g.rotation.y = Math.PI;
+  g.traverse(o => { if (o.isMesh && o.material && o.material.emissiveIntensity !== undefined) o.userData.baseEI = o.material.emissiveIntensity; });
   const x = rand(-15, 15), y = rand(-9, 9);
   g.position.set(x, y, -70);
-  g.userData = { hp, maxHp: hp, kind, shootT: rand(1.4, 3), type: 'enemy', moveT: 0, mat, flash: 0 };
+  g.userData = { hp, maxHp: hp, kind, shootT: rand(1.6, 3.2), type: 'enemy', moveT: 0, banT: rand(0, 6), flash: 0 };
   scene.add(g);
   enemies.push(g);
   return g;
@@ -425,19 +432,28 @@ const enemyBullets = [];
 const ebt = [];
 
 function enemyBullet(x, y, z, vx, vy, vz, dmg) {
-  const m = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 8), add(0xffdd44, 1));
-  m.position.set(x, y, z);
-  scene.add(m);
-  enemyBullets.push({ m, v: new THREE.Vector3(vx, vy, vz), dmg, life: 6 });
+  const g = new THREE.Group();
+  const core = new THREE.Mesh(new THREE.SphereGeometry(0.32, 10, 10), add(0xffee99, 1));
+  g.add(core);
+  const halo = new THREE.Mesh(new THREE.SphereGeometry(0.62, 10, 10), add(0xff4411, 0.35));
+  g.add(halo);
+  const trail = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 2.2), add(0xff5522, 0.85));
+  trail.position.z = -1.1;
+  g.add(trail);
+  g.position.set(x, y, z);
+  g.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(vx, vy, vz).normalize());
+  scene.add(g);
+  enemyBullets.push({ m: g, v: new THREE.Vector3(vx, vy, vz), dmg, life: 6 });
 }
 
 function updateEnemies(dt) {
   for (let i = enemies.length - 1; i >= 0; i--) {
     const e = enemies[i];
     const ud = e.userData;
-    if (ud.flash > 0) {
-      ud.flash -= dt;
-      if (ud.mat) ud.mat.emissiveIntensity = ud.flash > 0 ? 6 : 2.4;
+    if (ud.flash !== undefined) {
+      if (ud.flash > 0) ud.flash -= dt;
+      const k = ud.flash > 0 ? 2.4 : 1.0;
+      e.traverse(o => { if (o.isMesh && o.material && o.userData.baseEI !== undefined) o.material.emissiveIntensity = o.userData.baseEI * k; });
     }
     // 向玩家逼近
     e.position.z += dt * 8;
@@ -452,7 +468,9 @@ function updateEnemies(dt) {
       e.position.x += ud.dx * dt * 3;
       e.position.y += ud.dy * dt * 3;
     }
-    e.rotation.y += dt * 2;
+    ud.banT += dt;
+    e.rotation.z = Math.sin(ud.banT * 1.7) * 0.35;
+    e.rotation.x = Math.cos(ud.banT * 1.3) * 0.15;
     // 开火
     ud.shootT -= dt;
     if (ud.shootT <= 0 && e.position.z > -70) {
@@ -465,7 +483,7 @@ function updateEnemies(dt) {
     // 与玩家碰撞
     if (playerState.invuln <= 0 && Math.abs(e.position.z) < 2.5) {
       const d = Math.hypot(e.position.x - playerPos.x, e.position.y - playerPos.y);
-      if (d < 1.8) {
+      if (d < 1.5) {
         playerState.invuln = 1.0;
         damagePlayer(20);
         spawnBoom(e.position.x, e.position.y, e.position.z, 60, 0xff8844, 16, 0.6);
@@ -687,26 +705,16 @@ function updatePlayer(dt) {
   if (keys.has('d') || keys.has('arrowright')) ax += 1;
   if (keys.has('w') || keys.has('arrowup')) ay += 1;
   if (keys.has('s') || keys.has('arrowdown')) ay -= 1;
-  // 鼠标目标点(屏幕坐标 -> 世界平面)
-  if (input.useMouse) {
-    const nx = (input.mx / window.innerWidth) * 2 - 1;
-    const ny = -(input.my / window.innerHeight) * 2 + 1;
-    const t = new THREE.Vector3(nx * 17, ny * 11, 0);
-    playerPos.lerp(t, Math.min(1, dts * 6));
-  }
-  if (ax || ay) {
-    input.useMouse = false;
-    playerPos.x += ax * playerState.speed * dts;
-    playerPos.y += ay * playerState.speed * dts;
-  }
+  playerPos.x += ax * playerState.speed * dts;
+  playerPos.y += ay * playerState.speed * dts;
   // 冲刺
   if (playerState.dashCd > 0) playerState.dashCd -= dt;
   if (input.keys.has(' ') && playerState.dashCd <= 0) {
     playerState.dashCd = 2.2;
     playerState.invuln = 0.5;
-    const dx = ax || (input.useMouse ? 0 : 1), dy = ay;
-    if (dx === 0 && dy === 0) playerPos.x += 6 * (Math.random() < 0.5 ? 1 : -1);
-    else { playerPos.x += dx * 7; playerPos.y += dy * 7; }
+    let dx = ax, dy = ay;
+    if (dx === 0 && dy === 0) dx = Math.random() < 0.5 ? 1 : -1;
+    playerPos.x += dx * 7; playerPos.y += dy * 7;
     spawnBoom(playerPos.x, playerPos.y, 1, 40, 0x66ddff, 14, 0.5);
     flash(0.25); cameraShake(0.25);
     playerPos.x = Math.max(-17, Math.min(17, playerPos.x));
@@ -785,12 +793,14 @@ function update(dt) {
 
   // 相机跟随 + 震动
   shake *= Math.pow(0.001, dt);
-  const camTgtX = playerPos.x * 0.35 + rand(-1, 1) * shake * 0.6;
-  const camTgtY = playerPos.y * 0.35 + 2.4 + rand(-1, 1) * shake * 0.6;
-  camera.position.x += (camTgtX - camera.position.x) * Math.min(1, dt * 5);
-  camera.position.y += (camTgtY - camera.position.y) * Math.min(1, dt * 5);
-  camera.position.z = 13 + (state.slow > 0 ? 2 : 0);
-  camera.lookAt(playerPos.x * 0.5, playerPos.y * 0.5, -30);
+  // chase camera: locked behind the ship, facing forward
+  const camTgtX = playerPos.x + rand(-1, 1) * shake * 0.7;
+  const camTgtY = playerPos.y + 3.2 + rand(-1, 1) * shake * 0.7;
+  const camTgtZ = 13.5 + (state.slow > 0 ? 3 : 0);
+  camera.position.x += (camTgtX - camera.position.x) * Math.min(1, dt * 7);
+  camera.position.y += (camTgtY - camera.position.y) * Math.min(1, dt * 7);
+  camera.position.z += (camTgtZ - camera.position.z) * Math.min(1, dt * 7);
+  camera.lookAt(playerPos.x, playerPos.y + 0.6, -60);
 
   updateBooms(dts);
 }
@@ -814,7 +824,6 @@ window.addEventListener('resize', () => {
 });
 window.addEventListener('keydown', (e) => { input.keys.add(e.key.toLowerCase()); if (e.key === ' ') e.preventDefault(); });
 window.addEventListener('keyup', (e) => input.keys.delete(e.key.toLowerCase()));
-window.addEventListener('mousemove', (e) => { input.mx = e.clientX; input.my = e.clientY; input.useMouse = true; });
 
 // ---------- 开始/结束 ----------
 function startGame() {
