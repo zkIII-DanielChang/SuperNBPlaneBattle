@@ -178,26 +178,36 @@ const enemies = [];
 function spawnEnemy(kind) {
   const g = new THREE.Group();
   let hp;
+  let mat;
   if (kind === 0) {
     hp = 40;
-    const body = new THREE.Mesh(new THREE.OctahedronGeometry(1.1, 0), neon(0xff5544, 1.3));
+    mat = neon(0xff3322, 2.4);
+    const body = new THREE.Mesh(new THREE.OctahedronGeometry(1.6, 0), mat);
     g.add(body);
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 8), add(0xffffff, 1));
-    eye.position.z = 0.6; g.add(eye);
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 8), add(0xffffff, 1));
+    eye.position.z = 1.0; g.add(eye);
+    const mark = new THREE.Mesh(new THREE.RingGeometry(2.1, 2.4, 24), add(0xff6644, 0.9));
+    g.add(mark);
   } else if (kind === 1) {
     hp = 80;
-    const body = new THREE.Mesh(new THREE.ConeGeometry(0.8, 2.0, 5), neon(0xffaa33, 1.2));
+    mat = neon(0xffaa22, 2.4);
+    const body = new THREE.Mesh(new THREE.ConeGeometry(1.1, 2.6, 5), mat);
     body.rotation.x = Math.PI / 2; g.add(body);
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.08, 8, 20), add(0xffdd55, 1));
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(1.7, 0.14, 8, 24), add(0xffee55, 1));
     g.add(ring);
+    const mark = new THREE.Mesh(new THREE.RingGeometry(2.4, 2.7, 24), add(0xffcc44, 0.9));
+    g.add(mark);
   } else {
     hp = 130;
-    const body = new THREE.Mesh(new THREE.IcosahedronGeometry(1.3, 0), neon(0xcc66ff, 1.2));
+    mat = neon(0xcc55ff, 2.4);
+    const body = new THREE.Mesh(new THREE.IcosahedronGeometry(1.8, 0), mat);
     g.add(body);
+    const mark = new THREE.Mesh(new THREE.RingGeometry(2.5, 2.8, 24), add(0xcc66ff, 0.9));
+    g.add(mark);
   }
-  const x = rand(-16, 16), y = rand(-9, 9);
-  g.position.set(x, y, -95);
-  g.userData = { hp, maxHp: hp, kind, shootT: rand(0.8, 2.5), type: 'enemy', moveT: 0 };
+  const x = rand(-15, 15), y = rand(-9, 9);
+  g.position.set(x, y, -70);
+  g.userData = { hp, maxHp: hp, kind, shootT: rand(1.4, 3), type: 'enemy', moveT: 0, mat, flash: 0 };
   scene.add(g);
   enemies.push(g);
   return g;
@@ -333,7 +343,10 @@ function updateHUD() {
   combo.textContent = playerState.combo > 1 ? playerState.combo + 'x' : '';
   combo.style.opacity = playerState.combo > 1 ? 1 : 0.25;
   document.getElementById('layer').textContent = 'Layer ' + state.layer;
-  document.getElementById('center').textContent = state.playing ? 'BOSS: ' + Math.max(0, Math.ceil(boss ? boss.userData.hp / boss.userData.maxHp * 100 : 0)) + '%' : '';
+  const centerEl = document.getElementById('center');
+  if (!state.playing) { centerEl.textContent = ''; }
+  else if (boss) centerEl.textContent = 'BOSS ' + Math.max(0, Math.ceil(boss.userData.hp / boss.userData.maxHp * 100)) + '%  |  集火白色发光部件!';
+  else centerEl.textContent = '敌机剩余 ' + enemies.length + ' 架  |  全灭后 BOSS 登场';
 }
 function updatePartsUI() {
   const box = document.getElementById('parts');
@@ -412,7 +425,7 @@ const enemyBullets = [];
 const ebt = [];
 
 function enemyBullet(x, y, z, vx, vy, vz, dmg) {
-  const m = new THREE.Mesh(new THREE.SphereGeometry(0.28, 6, 6), add(0xff8844, 1));
+  const m = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 8), add(0xffdd44, 1));
   m.position.set(x, y, z);
   scene.add(m);
   enemyBullets.push({ m, v: new THREE.Vector3(vx, vy, vz), dmg, life: 6 });
@@ -422,6 +435,10 @@ function updateEnemies(dt) {
   for (let i = enemies.length - 1; i >= 0; i--) {
     const e = enemies[i];
     const ud = e.userData;
+    if (ud.flash > 0) {
+      ud.flash -= dt;
+      if (ud.mat) ud.mat.emissiveIntensity = ud.flash > 0 ? 6 : 2.4;
+    }
     // 向玩家逼近
     e.position.z += dt * 8;
     ud.moveT -= dt;
@@ -446,11 +463,11 @@ function updateEnemies(dt) {
     // 出界销毁
     if (e.position.z > 15) { scene.remove(e); enemies.splice(i, 1); continue; }
     // 与玩家碰撞
-    if (playerState.invuln <= 0) {
+    if (playerState.invuln <= 0 && Math.abs(e.position.z) < 2.5) {
       const d = Math.hypot(e.position.x - playerPos.x, e.position.y - playerPos.y);
       if (d < 1.8) {
         playerState.invuln = 1.0;
-        damagePlayer(25);
+        damagePlayer(20);
         spawnBoom(e.position.x, e.position.y, e.position.z, 60, 0xff8844, 16, 0.6);
         scene.remove(e); enemies.splice(i, 1);
         cameraShake(0.5); hitstop(0.1);
@@ -478,7 +495,7 @@ function playerFire(dt) {
     tmpN.copy(tmpDir);
     const x = tmpN.x + spread;
     tmpN.x = x; tmpN.normalize();
-    fireBullet(playerPos.clone().add(new THREE.Vector3(0, 0, -1.6)), tmpN, playerState.dmg, 0x66ddff, 0.3, playerState.pierce);
+    fireBullet(playerPos.clone().add(new THREE.Vector3(0, 0, -1.6)), tmpN, playerState.dmg, 0xaaffff, 0.4, playerState.pierce);
   }
   muzzle();
 }
@@ -524,6 +541,7 @@ function updateBullets(dt) {
         const isCrit = Math.random() < playerState.crit;
         const dmg = isCrit ? Math.round(b.dmg * playerState.critMult) : b.dmg;
         e.userData.hp -= dmg;
+        e.userData.flash = 0.09;
         dmgText(e.position.x, e.position.y + 1.2, e.position.z, dmg, isCrit ? '#ff4488' : '#9ef');
         spawnBoom(b.m.position.x, b.m.position.y, b.m.position.z, 10, 0x88eeff, 8, 0.3);
         if (e.userData.hp <= 0) killEnemy(e, j);
@@ -590,7 +608,7 @@ function updateBoss(dt) {
   if (!boss) return;
   const ud = boss.userData;
   // 入场与漂移
-  if (boss.position.z < -26) boss.position.z += dt * 14;
+  if (boss.position.z < -26) boss.position.z += dt * 22;
   else {
     ud.phase += dt;
     boss.position.x = Math.sin(ud.phase * 0.6) * 9;
@@ -716,7 +734,7 @@ function updateWingmen(dt) {
       let target = boss && boss.position.z > -60 ? boss : nearestEnemy(w.g.position);
       if (target) {
         tmpDir.copy(target.position).sub(w.g.position).normalize();
-        fireBullet(w.g.position.clone(), tmpDir, playerState.dmg * 0.5, 0x44ffaa, 0.22, playerState.pierce);
+        fireBullet(w.g.position.clone(), tmpDir, playerState.dmg * 0.5, 0x66ffbb, 0.3, playerState.pierce);
       }
     }
   });
