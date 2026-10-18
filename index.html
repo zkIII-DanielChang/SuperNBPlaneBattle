@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>拆解者 · SuperNB Plane Battle</title>
+<link rel="stylesheet" href="./src/style.css" />
+</head>
+<body>
+<div id="app">
+  <canvas id="game"></canvas>
+  <div id="hud" class="hidden">
+    <div id="hpwrap"><div id="hpbar"></div></div>
+    <div id="combo">0x</div>
+    <div id="layer">第 1 层</div>
+    <div id="parts"></div>
+    <div id="center"></div>
+  </div>
+  <div id="title" class="overlay">
+    <h1>拆 解 者</h1>
+    <p class="sub">SUPER NB · PLANE BATTLE</p>
+    <p class="tag">击碎 BOSS · 掠夺它的零件 · 拼到你自己身上</p>
+    <div class="keys">
+      <div><kbd>鼠标 / WASD</kbd><span>移动</span></div>
+      <div><kbd>自动开火</kbd><span>朝最近敌机</span></div>
+      <div><kbd>空格</kbd><span>冲刺</span></div>
+    </div>
+    <button id="startBtn">开始游戏</button>
+    <div id="bestline"></div>
+  </div>
+  <div id="over" class="overlay hidden">
+    <h2>机体解体</h2>
+    <div id="stats"></div>
+    <button id="restartBtn">再战一局</button>
+    <div id="overbest"></div>
+  </div>
+  <div id="pick" class="overlay hidden">
+    <h2>拾取 3 个零件</h2>
+    <p class="sub">选一个装上 — 从你击碎的敌机上掠夺</p>
+    <div id="pickCards"></div>
+  </div>
+</div>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>

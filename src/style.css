@@ -1,0 +1,39 @@
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#04050a;color:#cfe8ff;font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;user-select:none}
+#app,#game{position:fixed;inset:0}
+canvas{display:block}
+.hidden{display:none!important}
+.overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(ellipse at center,rgba(10,12,30,.5),rgba(2,3,8,.88));z-index:20}
+.overlay h1{font-size:64px;letter-spacing:.35em;text-indent:.35em;color:#9ef;text-shadow:0 0 30px #48f,0 0 80px #26c;font-weight:800;animation:titleGlow 2.4s ease-in-out infinite}
+@keyframes titleGlow{0%,100%{text-shadow:0 0 30px #48f,0 0 80px #26c}50%{text-shadow:0 0 45px #7af,0 0 120px #37e}}
+.overlay h2{font-size:56px;letter-spacing:.2em;color:#f88;text-shadow:0 0 30px #f33,0 0 80px #a00;font-weight:800}
+.overlay .sub{font-size:15px;letter-spacing:.4em;color:#5a8;margin:6px 0}
+.overlay .tag{color:#8ae;margin-top:14px;font-size:14px}
+.keys{display:flex;gap:26px;margin:28px 0;flex-wrap:wrap;justify-content:center}
+.keys div{display:flex;flex-direction:column;gap:4px}
+kbd{background:#0c1220;border:1px solid #3a6;border-radius:6px;padding:8px 14px;font-size:14px;color:#cfe8ff;box-shadow:0 2px 8px #000,0 0 12px rgba(64,128,255,.25)}
+.keys span{color:#567;font-size:12px}
+button{background:linear-gradient(135deg,#1b3f9e,#2a7);border:none;color:#fff;font-size:20px;letter-spacing:.2em;padding:14px 44px;border-radius:10px;cursor:pointer;box-shadow:0 0 24px rgba(64,160,255,.6),inset 0 0 12px rgba(255,255,255,.25);transition:.15s;margin-top:10px}
+button:hover{transform:scale(1.06);box-shadow:0 0 40px rgba(96,192,255,.9)}
+#hud{position:fixed;inset:0;pointer-events:none;z-index:10}
+#hpwrap{position:absolute;left:24px;top:22px;width:280px;height:16px;border:1px solid #3a6;border-radius:8px;background:rgba(0,0,0,.4);overflow:hidden}
+#hpbar{height:100%;width:100%;background:linear-gradient(90deg,#3f6,#8f6);box-shadow:0 0 12px #4f6;transition:width .18s}
+#combo{position:absolute;right:28px;top:16px;font-size:40px;font-weight:800;color:#9ef;text-shadow:0 0 20px #48f;opacity:.9}
+#layer{position:absolute;left:24px;top:48px;font-size:14px;letter-spacing:.2em;color:#6af;text-shadow:0 0 8px #26c}
+#parts{position:absolute;left:24px;bottom:22px;display:flex;gap:8px;flex-wrap:wrap;max-width:60%}
+.slot{width:46px;height:46px;border-radius:8px;border:1px solid #48a;background:rgba(8,16,32,.6);display:flex;align-items:center;justify-content:center;font-size:22px;color:#9ef;box-shadow:inset 0 0 10px rgba(64,128,255,.3)}
+#center{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);font-size:22px;color:#9ef;text-shadow:0 0 14px #48f;letter-spacing:.2em;opacity:.9}
+#pick{background:radial-gradient(ellipse at center,rgba(16,20,44,.85),rgba(2,3,8,.95))}
+#pick h2{color:#9ef;text-shadow:0 0 30px #48f,0 0 80px #26c}
+#pickCards{display:flex;gap:26px;margin-top:26px;flex-wrap:wrap;justify-content:center}
+.card{width:190px;min-height:200px;background:rgba(10,16,34,.9);border:1px solid #48a;border-radius:14px;padding:20px;cursor:pointer;transition:.15s;display:flex;flex-direction:column;align-items:center;gap:8px}
+.card:hover{transform:translateY(-8px) scale(1.04);border-color:#9ef;box-shadow:0 0 30px rgba(80,160,255,.5)}
+.card .ico{font-size:46px}
+.card .nm{font-size:19px;color:#9ef;font-weight:700}
+.card .desc{font-size:13px;color:#7ad;line-height:1.5;margin-top:4px}
+.card .tag{color:#a8e;font-size:12px;border:1px solid #3a6;padding:2px 10px;border-radius:20px;margin-top:auto}
+#stats{margin:16px 0;font-size:18px;line-height:2;color:#cfe8ff}
+#stats b{color:#9ef}
+#overbest,#bestline{color:#6af;font-size:13px;margin-top:12px;letter-spacing:.15em}
+#bestline{margin-top:16px}
+@media (max-width:700px){.overlay h1{font-size:42px}.overlay h2{font-size:34px}.card{width:150px;min-height:170px}.keys{gap:14px}}
